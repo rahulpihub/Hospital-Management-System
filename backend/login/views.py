@@ -5,7 +5,7 @@ import re
 
 client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["hospital"]
-collection = db["login"]
+collection = db["registration_data"]
 
 def validate_email(email):
     return re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email)

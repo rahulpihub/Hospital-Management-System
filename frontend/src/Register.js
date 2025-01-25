@@ -36,7 +36,7 @@ function Register() {
     }
 
     try {
-      await axios.post('http://127.0.0.1:8000/api/login', formData);
+      await axios.post('http://127.0.0.1:8000/api/registration', formData);
       setError('');
       navigate('/login'); // Navigate to the Login page on success
     } catch (err) {
