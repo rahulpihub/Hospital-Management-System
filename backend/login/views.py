@@ -14,7 +14,7 @@ def validate_password(password):
     return re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', password)
 
 @csrf_exempt
-def login(request):
+def registration(request):
     if request.method == 'POST':
         try:
             import json
@@ -119,17 +119,59 @@ def verify_otp(request):
             data = json.loads(request.body)
             email = data.get("email")
             otp = data.get("otp")
+            print(f"Received OTP: {otp}, for email: {email}")
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
 
         if not email or not otp:
             return JsonResponse({"success": False, "message": "Email and OTP are required"})
-        
+
         cached_otp = cache.get(email)
-        if cached_otp and int(otp) == cached_otp:
-            cache.delete(email)  # Remove OTP after successful verification
-            return JsonResponse({"success": True, "message": "OTP verified successfully"})
-        return JsonResponse({"success": False, "message": "Invalid or expired OTP"})
+        if cached_otp:
+            print(f"Cached OTP for email {email}: {cached_otp}")
+            if int(otp) == cached_otp:
+                cache.delete(email)  # Remove OTP after successful verification
+                return JsonResponse({"success": True, "message": "OTP verified successfully"})
+            else:
+                return JsonResponse({"success": False, "message": "Invalid OTP"})
+        else:
+            return JsonResponse({"success": False, "message": "OTP expired or not found"})
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from pymongo import MongoClient
+import json
+
+# MongoDB connection setup
+client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["hospital"]
+collection = db["registration_data"]
+
+@csrf_exempt
+def login(request):
+    """Endpoint for user login"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            email = data.get("email")
+            password = data.get("password")
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
+
+        if not email or not password:
+            return JsonResponse({"success": False, "message": "Email and password are required"})
+
+        # Fetch the user data from MongoDB
+        user = collection.find_one({"email": email})
+
+        if user and user["password"] == password:
+            # Successful login
+            return JsonResponse({"success": True, "message": "Login successful"})
+        else:
+            # Incorrect credentials
+            return JsonResponse({"success": False, "message": "Invalid email or password"})
+
+    return JsonResponse({"success": False, "message": "Invalid request method"})
