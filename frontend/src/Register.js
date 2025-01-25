@@ -45,6 +45,10 @@ function Register() {
     }
   };
 
+  const goToLoginPage = () => {
+    navigate('/login'); // Navigate to the Login page when the button is clicked
+  };
+
   return (
     <div style={{ marginTop: '50px', textAlign: 'center' }}>
       <h1>Register</h1>
@@ -73,7 +77,21 @@ function Register() {
           onChange={handleInputChange}
           style={{ display: 'block', margin: '10px auto', padding: '10px' }}
         />
-        <button type="submit" style={{ padding: '10px 20px' }}>Submit</button>
+        <button type="submit" style={{ padding: '10px 20px', marginRight: '10px' }}>Submit</button>
+        <button
+          type="button"
+          onClick={goToLoginPage}
+          style={{
+            padding: '10px 20px',
+            backgroundColor: '#007bff',
+            color: '#fff',
+            border: 'none',
+            cursor: 'pointer',
+            borderRadius: '5px'
+          }}
+        >
+          Login Page
+        </button>
       </form>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </div>
