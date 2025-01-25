@@ -1,15 +1,13 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 
 function Register() {
-  const [formData, setFormData] = useState({ username: '', email: '', password: '' });
-  const [error, setError] = useState('');
+  const [formData, setFormData] = useState({ username: "", email: "", password: "" });
+  const [otp, setOtp] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
-
-  const validateEmail = (email) => /^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(email);
-  const validatePassword = (password) =>
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,82 +16,100 @@ function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const { username, email, password } = formData;
-
-    if (!username || !email || !password) {
-      setError('All fields are required');
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setError('Email must be a valid @gmail.com address');
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      setError('Password must be at least 8 characters long, include uppercase, lowercase, number, and special character');
-      return;
-    }
+    const { email } = formData;
 
     try {
-      await axios.post('http://127.0.0.1:8000/api/registration', formData);
-      setError('');
-      navigate('/login'); // Navigate to the Login page on success
+      console.log("Email:", email); // Debugging the email value
+
+      // Request OTP
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/send_otp", 
+        { email } // sending email in the request body as JSON
+      );
+
+      if (response.data.success) {
+        setOtpSent(true);
+        setError("");
+      } else {
+        setError(response.data.message || "Failed to send OTP");
+      }
     } catch (err) {
-      setError('Failed to submit data. Please try again.');
       console.error(err);
+      setError("Error sending OTP");
     }
   };
 
-  const goToLoginPage = () => {
-    navigate('/login'); // Navigate to the Login page when the button is clicked
+  const handleOtpVerify = async () => {
+    const { email } = formData;
+
+    try {
+      // Verify OTP
+      const response = await axios.post(
+        "http://127.0.0.1:8000/api/verify_otp", 
+        { email, otp }
+      );
+
+      if (response.data.success) {
+        setError("");
+        // Proceed with registration
+        await axios.post("http://127.0.0.1:8000/api/registration", formData);
+        navigate("/login"); // Navigate to Login after successful registration
+      } else {
+        setError(response.data.message || "Invalid OTP");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Error verifying OTP");
+    }
   };
 
   return (
-    <div style={{ marginTop: '50px', textAlign: 'center' }}>
+    <div style={{ marginTop: "50px", textAlign: "center" }}>
       <h1>Register</h1>
-      <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          name="username"
-          placeholder="Username"
-          value={formData.username}
-          onChange={handleInputChange}
-          style={{ display: 'block', margin: '10px auto', padding: '10px' }}
-        />
-        <input
-          type="email"
-          name="email"
-          placeholder="Email"
-          value={formData.email}
-          onChange={handleInputChange}
-          style={{ display: 'block', margin: '10px auto', padding: '10px' }}
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleInputChange}
-          style={{ display: 'block', margin: '10px auto', padding: '10px' }}
-        />
-        <button type="submit" style={{ padding: '10px 20px', marginRight: '10px' }}>Submit</button>
-        <button
-          type="button"
-          onClick={goToLoginPage}
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#007bff',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
-            borderRadius: '5px'
-          }}
-        >
-          Login Page
-        </button>
-      </form>
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {!otpSent ? (
+        <form onSubmit={handleSubmit}>
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            value={formData.username}
+            onChange={handleInputChange}
+            style={{ display: "block", margin: "10px auto", padding: "10px" }}
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleInputChange}
+            style={{ display: "block", margin: "10px auto", padding: "10px" }}
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleInputChange}
+            style={{ display: "block", margin: "10px auto", padding: "10px" }}
+          />
+          <button type="submit" style={{ padding: "10px 20px" }}>Send OTP</button>
+        </form>
+      ) : (
+        <div>
+          <h2>Verify OTP</h2>
+          <input
+            type="text"
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            style={{ display: "block", margin: "10px auto", padding: "10px" }}
+          />
+          <button onClick={handleOtpVerify} style={{ padding: "10px 20px" }}>
+            Verify OTP
+          </button>
+        </div>
+      )}
+      {error && <p style={{ color: "red" }}>{error}</p>}
     </div>
   );
 }
