@@ -119,17 +119,23 @@ def verify_otp(request):
             data = json.loads(request.body)
             email = data.get("email")
             otp = data.get("otp")
+            print(f"Received OTP: {otp}, for email: {email}")
         except json.JSONDecodeError:
             return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
 
         if not email or not otp:
             return JsonResponse({"success": False, "message": "Email and OTP are required"})
-        
+
         cached_otp = cache.get(email)
-        if cached_otp and int(otp) == cached_otp:
-            cache.delete(email)  # Remove OTP after successful verification
-            return JsonResponse({"success": True, "message": "OTP verified successfully"})
-        return JsonResponse({"success": False, "message": "Invalid or expired OTP"})
+        if cached_otp:
+            print(f"Cached OTP for email {email}: {cached_otp}")
+            if int(otp) == cached_otp:
+                cache.delete(email)  # Remove OTP after successful verification
+                return JsonResponse({"success": True, "message": "OTP verified successfully"})
+            else:
+                return JsonResponse({"success": False, "message": "Invalid OTP"})
+        else:
+            return JsonResponse({"success": False, "message": "OTP expired or not found"})
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
