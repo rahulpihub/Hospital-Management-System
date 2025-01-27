@@ -40,6 +40,11 @@ function Login() {
       setMessage('');
     }
   };
+
+    // Navigate to forgot password page
+    const handleForgotPassword = () => {
+      navigate('/forgotpassword');
+    };
   
   return (
     <div style={styles.container}>
@@ -63,8 +68,7 @@ function Login() {
         />
         <button type="submit" style={styles.button}>Login</button>
       </form>
-      {/* Uncomment to enable logout button */}
-      {/* <button onClick={handleLogout} style={styles.logoutButton}>Logout</button> */}
+      <button onClick={handleForgotPassword} style={styles.forgotPasswordButton}>Forgot Password</button>
       {message && <p style={styles.successMessage}>{message}</p>}
       {error && <p style={styles.errorMessage}>{error}</p>}
     </div>
@@ -117,8 +121,8 @@ const styles = {
     transition: 'background-color 0.3s ease',
     marginTop: '20px',
   },
-  logoutButton: {
-    backgroundColor: '#FF3300',
+  forgotPasswordButton: {
+    backgroundColor: '#007BFF',
     color: '#fff',
     border: 'none',
     padding: '12px 30px',
@@ -126,7 +130,7 @@ const styles = {
     fontSize: '16px',
     cursor: 'pointer',
     transition: 'background-color 0.3s ease',
-    marginTop: '10px',
+    marginTop: '20px',
   },
   successMessage: {
     color: 'green',
@@ -139,5 +143,6 @@ const styles = {
     marginTop: '20px',
   },
 };
+
 
 export default Login;

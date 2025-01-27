@@ -4,6 +4,7 @@ import Register from './Register'; // Registration Page
 import Login from './Login'; // Login Page
 import Home from './home';    
 import Admin from './admin';
+import ForgotPassword from './forgotpassword';
 
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/home" element={<Home />} />
+        <Route path="/forgotpassword" element={<ForgotPassword />} />
       </Routes>
     </Router>
   );
