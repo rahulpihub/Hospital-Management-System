@@ -45,7 +45,7 @@ function Login() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.header}>Login</h1>
+      <h1 style={styles.header}>Hospital Management System - Login</h1>
       <form onSubmit={handleSubmit} style={styles.form}>
         <input
           type="email"
