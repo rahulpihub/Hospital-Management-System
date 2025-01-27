@@ -6,4 +6,7 @@ urlpatterns = [
     path('api/send_otp', views.send_otp, name='send_otp'),
     path('api/verify_otp', views.verify_otp, name='verify_otp'),
     path('api/login', views.login, name='login'),
+    path('api/admin', views.create_account, name='create_account'),
 ]
+
+

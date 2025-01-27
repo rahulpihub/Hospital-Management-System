@@ -139,15 +139,6 @@ def verify_otp(request):
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from pymongo import MongoClient
-import json
-
-# MongoDB connection setup
-client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-db = client["hospital"]
 collection = db["registration_data"]
 
 @csrf_exempt
@@ -175,3 +166,49 @@ def login(request):
             return JsonResponse({"success": False, "message": "Invalid email or password"})
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
+
+accountcollections = db["Credentials"]
+
+def validate_email(email):
+    """Validate email to ensure it ends with @gmail.com"""
+    return re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email)
+
+@csrf_exempt
+def create_account(request):
+    """Endpoint to create accounts for Admin, Doctor, and Nurse"""
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body)
+            username = data.get('username', '').strip()
+            email = data.get('email', '').strip()
+            password = data.get('password', '').strip()
+            role = data.get('role', '').strip()
+            privilege = data.get('privilege', '').strip()
+
+            if not username or not email or not password or not role or not privilege:
+                return JsonResponse({"message": "All fields are required."}, status=400)
+
+            if not validate_email(email):
+                return JsonResponse({"message": "Invalid email format. Only @gmail.com allowed."}, status=400)
+            
+            if not validate_password(password):
+                return JsonResponse({
+                    "message": "Password must include uppercase, lowercase, number, special character, and be at least 8 characters long"
+                }, status=400)
+
+            # Store the user data in MongoDB
+            account = {
+                "username": username,
+                "email": email,
+                "password": password,
+                "role": role,
+                "privilege": privilege
+            }
+            accountcollections.insert_one(account)
+
+            return JsonResponse({"message": "Account created successfully!"}, status=201)
+
+        except Exception as e:
+            return JsonResponse({"message": "Error occurred while creating account.", "error": str(e)}, status=500)
+
+    return JsonResponse({"message": "Invalid request method."}, status=405)
