@@ -190,38 +190,31 @@ def forgot_password(request):
             print(f"Error during password reset: {e}")
             return JsonResponse({'success': False, 'message': 'An error occurred. Please try again later.'}, status=500)
         
+
+
+
+@csrf_exempt
 def reset_password(request):
     if request.method == 'POST':
         try:
-            # Get data from the request body
-            data = request.POST
-            email = data.get('email')
-            new_password = data.get('newPassword')
+            # Parse JSON data from request
+            body = json.loads(request.body.decode('utf-8'))
+            email = body.get('email')
+            new_password = body.get('newPassword')
 
-            if not email or not new_password:
-                return JsonResponse({"error": "All fields are required"}, status=400)
+            # Check if email exists in the collection
+            user = collection.find_one({"email": email})
+            if not user:
+                return JsonResponse({"success": False, "message": "Email not found in the system"})
 
-            # Validate password (using the same criteria as in the frontend)
-            if len(new_password) < 8 or not any(char.isdigit() for char in new_password) or not any(char.isalpha() for char in new_password):
-                return JsonResponse({"error": "Password must be at least 8 characters long and contain letters and numbers"}, status=400)
-
-            # Hash the new password before saving
-            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
-
-            # Find the user in the collection and update the password
-            result = collection.update_one(
-                {"email": email},
-                {"$set": {"password": hashed_password}}
-            )
-
-            if result.matched_count == 0:
-                return JsonResponse({"error": "No user found with this email"}, status=404)
-
-            return JsonResponse({"success": "Password reset successfully"}, status=200)
-
+            # Update the user's password
+            collection.update_one({"email": email}, {"$set": {"password": new_password}})
+            return JsonResponse({"success": True, "message": "Password updated successfully"})
+        
         except Exception as e:
-            return JsonResponse({"error": f"Error: {str(e)}"}, status=500)
+            print(f"Error: {e}")
+            return JsonResponse({"success": False, "message": "An error occurred during the reset process"})
+    
+    return JsonResponse({"success": False, "message": "Invalid request method"})
 
-    else:
-        return JsonResponse({"error": "Invalid request method"}, status=405)
     

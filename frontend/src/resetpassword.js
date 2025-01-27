@@ -19,11 +19,19 @@ function ResetPassword() {
     return passwordRegex.test(password);
   };
 
+  // Email validation logic
+  const isGmail = (email) => email.endsWith('@gmail.com');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!email || !newPassword || !confirmPassword) {
       setError('All fields are required');
+      return;
+    }
+
+    if (!isGmail(email)) {
+      setError('Email must end with @gmail.com');
       return;
     }
 
@@ -33,18 +41,20 @@ function ResetPassword() {
     }
 
     if (!isPasswordValid(newPassword)) {
-      setError('Password must include uppercase, lowercase, number, special character, and be at least 8 characters long');
+      setError(
+        'Password must include uppercase, lowercase, number, special character, and be at least 8 characters long'
+      );
       return;
     }
 
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/reset-password', {
+      const response = await axios.post('http://127.0.0.1:8000/api/resetpassword', {
         email,
         newPassword,
       });
-      
+
       if (response.data.success) {
-        setMessage('Password reset successfully');
+        setMessage(response.data.message);
         setError('');
       } else {
         setError(response.data.message || 'Error resetting password');
