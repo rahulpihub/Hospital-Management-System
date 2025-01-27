@@ -2,6 +2,12 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pymongo import MongoClient
 import re
+import json
+from django.core.cache import cache
+import random
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["hospital"]
@@ -43,14 +49,6 @@ def registration(request):
             return JsonResponse({"message": "Error occurred", "error": str(e)}, status=500)
 
 
-import json
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.core.cache import cache
-import random
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 
 # Email Configuration
 EMAIL_HOST = "smtp.gmail.com"
@@ -139,8 +137,8 @@ def verify_otp(request):
 
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
-collection = db["registration_data"]
 
+collection = db["registration_data"]
 @csrf_exempt
 def login(request):
     """Endpoint for user login"""
@@ -168,7 +166,6 @@ def login(request):
     return JsonResponse({"success": False, "message": "Invalid request method"})
 
 accountcollections = db["Credentials"]
-
 def validate_email(email):
     """Validate email to ensure it ends with @gmail.com"""
     return re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email)

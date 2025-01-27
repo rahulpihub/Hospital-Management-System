@@ -94,10 +94,11 @@ function Admin() {
             <option value="Admin">Admin</option>
             <option value="Doctor">Doctor</option>
             <option value="Nurse">Nurse</option>
+            <option value="Staff">Staff</option>
           </select>
         </div>
         <div>
-          <label>Privilege:</label>
+          <label>Access Privilege:</label>
           <select name="privilege" value={formData.privilege} onChange={handleChange} required>
             <option value="">Select Privilege</option>
             <option value="Full Privilege">Full Privilege</option>
