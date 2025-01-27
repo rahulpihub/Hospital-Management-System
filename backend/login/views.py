@@ -193,6 +193,17 @@ def forgot_password(request):
 
 
 
+from django.http import JsonResponse
+from pymongo import MongoClient
+from django.views.decorators.csrf import csrf_exempt
+import json
+import bcrypt  # Import bcrypt for password hashing
+
+# Connect to MongoDB
+client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["hospital"]
+collection = db["Credentials"]
+
 @csrf_exempt
 def reset_password(request):
     if request.method == 'POST':
@@ -207,8 +218,11 @@ def reset_password(request):
             if not user:
                 return JsonResponse({"success": False, "message": "Email not found in the system"})
 
-            # Update the user's password
-            collection.update_one({"email": email}, {"$set": {"password": new_password}})
+            # Hash the new password using bcrypt
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+
+            # Update the user's password (store the hashed password)
+            collection.update_one({"email": email}, {"$set": {"password": hashed_password.decode('utf-8')}})
             return JsonResponse({"success": True, "message": "Password updated successfully"})
         
         except Exception as e:
@@ -216,5 +230,6 @@ def reset_password(request):
             return JsonResponse({"success": False, "message": "An error occurred during the reset process"})
     
     return JsonResponse({"success": False, "message": "Invalid request method"})
+
 
     
