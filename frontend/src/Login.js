@@ -8,6 +8,7 @@ function Login() {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
@@ -16,17 +17,18 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
-
+  
     if (!email || !password) {
       setError('Both fields are required');
       return;
     }
-
+  
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/login', { email, password });
       if (response.data.success) {
         setMessage('Login successful!');
         setError('');
+        localStorage.setItem("email", email); // Store email in localStorage
         navigate('/home'); // Navigate to home page upon successful login
       } else {
         setError(response.data.message || 'Invalid credentials. Please try again.');
@@ -38,31 +40,7 @@ function Login() {
       setMessage('');
     }
   };
-
-  const handleLogout = async () => {
-    const { email } = formData;
-
-    if (!email) {
-      setError('Email is required to logout');
-      return;
-    }
-
-    try {
-      const response = await axios.post('http://127.0.0.1:8000/api/logout', { email });
-      if (response.data.success) {
-        setMessage('Logout successful!');
-        setError('');
-      } else {
-        setError(response.data.message || 'Error during logout. Please try again.');
-        setMessage('');
-      }
-    } catch (err) {
-      console.error('Error during logout:', err);
-      setError('Error during logout. Please try again.');
-      setMessage('');
-    }
-  };
-
+  
   return (
     <div style={styles.container}>
       <h1 style={styles.header}>Hospital Management System - Login</h1>
@@ -85,6 +63,7 @@ function Login() {
         />
         <button type="submit" style={styles.button}>Login</button>
       </form>
+      {/* Uncomment to enable logout button */}
       {/* <button onClick={handleLogout} style={styles.logoutButton}>Logout</button> */}
       {message && <p style={styles.successMessage}>{message}</p>}
       {error && <p style={styles.errorMessage}>{error}</p>}
