@@ -25,12 +25,13 @@ function Login() {
   
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/login', { email, password });
+  
       if (response.data.success) {
         setMessage('Login successful!');
         setError('');
         localStorage.setItem("email", email); // Store email in localStorage
         localStorage.setItem("role", response.data.role); // Store user role in localStorage
-
+  
         // Navigate based on the role
         const role = response.data.role;
         if (role === 'doctor') {
@@ -45,11 +46,17 @@ function Login() {
         setMessage('');
       }
     } catch (err) {
-      console.error('Error during login:', err);
-      setError('Error during login. Please try again.');
+      if (err.response && err.response.status === 403) {
+        // If the account is locked, show an appropriate message
+        setError('Your account is locked. Try again after 30 minutes.');
+      } else {
+        console.error('Error during login:', err);
+        setError('Error during login. Please try again.');
+      }
       setMessage('');
     }
   };
+  
 
   // Navigate to forgot password page
   const handleForgotPassword = () => {

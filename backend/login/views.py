@@ -1,11 +1,20 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from pymongo import MongoClient
+import time
 import re
+import bcrypt
 import json
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+# def validate_email(email):
+#     """Validate email to ensure it ends with @gmail.com"""
+#     return re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email)
+# def validate_password(password):
+#     return re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', password)
+
 
 client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["hospital"]
@@ -33,24 +42,6 @@ def send_email(to_email, subject, message):
         server.quit()
     except Exception as e:
         print(f"Error sending email: {e}")
-
-
-def validate_email(email):
-    """Validate email to ensure it ends with @gmail.com"""
-    return re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email)
-def validate_password(password):
-    return re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', password)
-
-import bcrypt
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-import json
-from pymongo import MongoClient
-
-# MongoDB setup (adjust as per your database)
-client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-db = client["hospital"]
-collection = db["Credentials"]
 
 # Email validation (example)
 def validate_email(email):
@@ -122,6 +113,21 @@ def login(request):
         if not email or not password:
             return JsonResponse({"success": False, "message": "Email and password are required"}, status=400)
 
+        # Check if the account is locked
+        lock_record = collection.find_one({"email": email})
+        if lock_record:
+            # If the account is locked, check if it has been more than 30 minutes since the last failed attempt
+            last_failed_time = lock_record.get("last_failed_time")
+            failed_attempts = lock_record.get("failed_attempts", 0)
+            if failed_attempts >= 5:
+                # If the account is locked, reject login attempts until it's unlocked
+                if time.time() - last_failed_time < 1800:  # 1800 seconds = 30 minutes
+                    return JsonResponse({"success": False, "message": "Your account is locked. Try again after 30 minutes."}, status=403)
+                else:
+                    # If more than 30 minutes have passed, reset the failed attempts counter
+                    collection.update_one({"email": email}, {"$set": {"failed_attempts": 0}})
+                    lock_record = None  # Proceed to check the login
+
         # Fetch the user data from MongoDB
         user = collection.find_one({"email": email})
         if user:
@@ -130,6 +136,10 @@ def login(request):
 
             # Use bcrypt to compare the provided password with the stored hash
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
+                # Reset the failed attempts if login is successful
+                if lock_record:
+                    collection.update_one({"email": email}, {"$set": {"failed_attempts": 0}})
+                
                 # Send login email
                 send_email(email, "Login Notification", "You have logged in successfully.")
                 
@@ -143,12 +153,30 @@ def login(request):
                     "role": user_role  # Send the role to the frontend
                 }, status=200)
             else:
+                # Increment failed attempts counter in the LocksAccounts collection
+                failed_attempts = 1
+                if lock_record:
+                    failed_attempts = lock_record.get("failed_attempts", 0) + 1
+
+                # If failed attempts exceed 5, lock the account
+                if failed_attempts >= 5:
+                    collection.update_one(
+                        {"email": email},
+                        {"$set": {"failed_attempts": failed_attempts, "last_failed_time": time.time()}}
+                    )
+                    return JsonResponse({"success": False, "message": "Your account is locked. Try again after 30 minutes."}, status=403)
+                else:
+                    # Update failed attempts count for the account
+                    collection.update_one(
+                        {"email": email},
+                        {"$set": {"failed_attempts": failed_attempts, "last_failed_time": time.time()}}
+                    )
+
                 return JsonResponse({"success": False, "message": "Invalid email or password"}, status=401)
         else:
             return JsonResponse({"success": False, "message": "User not found"}, status=404)
 
     return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
-
 
 
 
@@ -200,19 +228,6 @@ def forgot_password(request):
             print(f"Error during password reset: {e}")
             return JsonResponse({'success': False, 'message': 'An error occurred. Please try again later.'}, status=500)
         
-
-
-
-from django.http import JsonResponse
-from pymongo import MongoClient
-from django.views.decorators.csrf import csrf_exempt
-import json
-import bcrypt  # Import bcrypt for password hashing
-
-# Connect to MongoDB
-client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
-db = client["hospital"]
-collection = db["Credentials"]
 
 @csrf_exempt
 def reset_password(request):
