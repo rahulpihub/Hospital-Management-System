@@ -132,13 +132,23 @@ def login(request):
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
                 # Send login email
                 send_email(email, "Login Notification", "You have logged in successfully.")
-                return JsonResponse({"success": True, "message": "Login successful"}, status=200)
+                
+                # Get the user's role
+                user_role = user.get("role", "user")  # Default to 'user' if role is not found
+
+                # Send the success response along with the role
+                return JsonResponse({
+                    "success": True,
+                    "message": "Login successful",
+                    "role": user_role  # Send the role to the frontend
+                }, status=200)
             else:
                 return JsonResponse({"success": False, "message": "Invalid email or password"}, status=401)
         else:
             return JsonResponse({"success": False, "message": "User not found"}, status=404)
 
     return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
+
 
 
 
