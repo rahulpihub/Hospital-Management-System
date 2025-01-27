@@ -13,7 +13,7 @@ function Login() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
 
@@ -23,15 +23,11 @@ function Login() {
     }
 
     try {
-      // Sending login request to backend
-      const response = await axios.post('http://127.0.0.1:8000/api/login', formData);
-      console.log(response.data); // Log the server response
-
+      const response = await axios.post('http://127.0.0.1:8000/api/login', { email, password });
       if (response.data.success) {
         setMessage('Login successful!');
         setError('');
-        // Navigate to home page upon successful login
-        navigate('/home');
+        navigate('/home'); // Navigate to home page upon successful login
       } else {
         setError(response.data.message || 'Invalid credentials. Please try again.');
         setMessage('');
@@ -43,10 +39,34 @@ function Login() {
     }
   };
 
+  const handleLogout = async () => {
+    const { email } = formData;
+
+    if (!email) {
+      setError('Email is required to logout');
+      return;
+    }
+
+    try {
+      const response = await axios.post('http://127.0.0.1:8000/api/logout', { email });
+      if (response.data.success) {
+        setMessage('Logout successful!');
+        setError('');
+      } else {
+        setError(response.data.message || 'Error during logout. Please try again.');
+        setMessage('');
+      }
+    } catch (err) {
+      console.error('Error during logout:', err);
+      setError('Error during logout. Please try again.');
+      setMessage('');
+    }
+  };
+
   return (
     <div style={styles.container}>
       <h1 style={styles.header}>Hospital Management System - Login</h1>
-      <form onSubmit={handleSubmit} style={styles.form}>
+      <form onSubmit={handleLogin} style={styles.form}>
         <input
           type="email"
           name="email"
@@ -65,6 +85,7 @@ function Login() {
         />
         <button type="submit" style={styles.button}>Login</button>
       </form>
+      {/* <button onClick={handleLogout} style={styles.logoutButton}>Logout</button> */}
       {message && <p style={styles.successMessage}>{message}</p>}
       {error && <p style={styles.errorMessage}>{error}</p>}
     </div>
@@ -107,7 +128,7 @@ const styles = {
     transition: 'border-color 0.3s ease',
   },
   button: {
-    backgroundColor: '#FF9900', // Amazon's yellow-orange theme
+    backgroundColor: '#FF9900',
     color: '#fff',
     border: 'none',
     padding: '12px 30px',
@@ -116,6 +137,17 @@ const styles = {
     cursor: 'pointer',
     transition: 'background-color 0.3s ease',
     marginTop: '20px',
+  },
+  logoutButton: {
+    backgroundColor: '#FF3300',
+    color: '#fff',
+    border: 'none',
+    padding: '12px 30px',
+    borderRadius: '4px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+    marginTop: '10px',
   },
   successMessage: {
     color: 'green',
