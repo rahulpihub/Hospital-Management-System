@@ -16,6 +16,24 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = "rahulsnsihub@gmail.com"  
 EMAIL_HOST_PASSWORD = "gspmoernuumgcerc"  
 
+def send_email(to_email, subject, message):
+    """Send an email notification."""
+    try:
+        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        server.starttls()
+        server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
+
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_HOST_USER
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(message, 'plain'))
+
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        print(f"Error sending email: {e}")
+
 
 def validate_email(email):
     """Validate email to ensure it ends with @gmail.com"""
@@ -124,34 +142,6 @@ def login(request):
 
 
 
-
-def send_email(to_email, subject, message):
-    """Send an email notification."""
-    try:
-        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
-        server.starttls()
-        server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
-
-        msg = MIMEMultipart()
-        msg['From'] = EMAIL_HOST_USER
-        msg['To'] = to_email
-        msg['Subject'] = subject
-        msg.attach(MIMEText(message, 'plain'))
-
-        server.send_message(msg)
-        server.quit()
-    except Exception as e:
-        print(f"Error sending email: {e}")
-
-
-
-        import json
-import smtplib
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-
 @csrf_exempt
 def logout(request):
     """Endpoint for user logout and sending an email notification"""
@@ -172,3 +162,30 @@ def logout(request):
         return JsonResponse({"success": True, "message": "Logout successful"}, status=200)
 
     return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
+
+@csrf_exempt
+def forgot_password(request):
+    """Handle password reset request."""
+    if request.method == 'POST':
+        try:
+            # Parse JSON body
+            data = json.loads(request.body)
+            email = data.get('email')
+            
+            # Check if the email is a valid Gmail address
+            if not email or not email.endswith('@gmail.com'):
+                return JsonResponse({'success': False, 'message': 'Invalid email address. Please use a valid Gmail address.'}, status=400)
+
+            # Generate a password reset link
+            reset_link = f"http://127.0.0.1:8000/reset-password"
+            
+            # Send the reset email
+            subject = "Password Reset Request"
+            message = f"To reset your password, click the link: {reset_link}"
+
+            send_email(email, subject, message)
+            return JsonResponse({'success': True, 'message': 'Password reset link sent to your email'})
+
+        except Exception as e:
+            print(f"Error during password reset: {e}")
+            return JsonResponse({'success': False, 'message': 'An error occurred. Please try again later.'}, status=500)

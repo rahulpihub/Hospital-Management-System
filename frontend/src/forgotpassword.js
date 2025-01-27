@@ -19,8 +19,22 @@ function ForgotPassword() {
       return;
     }
 
+    // Check if the email is a valid Gmail address
+    if (!email.endsWith('@gmail.com')) {
+      setError('Please enter a valid Gmail address');
+      return;
+    }
+
     try {
-      const response = await axios.post('http://127.0.0.1:8000/api/forgot-password', { email });
+      // Ensure the request content type is JSON
+      const response = await axios.post('http://127.0.0.1:8000/api/forgotpassword', 
+        { email }, 
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      
       if (response.data.success) {
         setMessage('Password reset link sent to your email');
         setError('');
@@ -55,7 +69,6 @@ function ForgotPassword() {
   );
 }
 
-// Styles for the component
 const styles = {
   container: {
     marginTop: '50px',
