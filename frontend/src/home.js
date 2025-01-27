@@ -11,7 +11,7 @@ function Home() {
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.header}>Welcome to the Home Page!</h1>
+      <h1 style={styles.header}>The Hospital Dashboard!</h1>
       <p style={styles.greeting}>You're logged in successfully!</p>
       <button onClick={handleLogout} style={styles.button}>
         Logout
