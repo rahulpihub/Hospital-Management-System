@@ -3,8 +3,6 @@ from django.views.decorators.csrf import csrf_exempt
 from pymongo import MongoClient
 import re
 import json
-from django.core.cache import cache
-import random
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -12,38 +10,58 @@ from email.mime.text import MIMEText
 client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
 db = client["hospital"]
 collection = db["Credentials"]
-@csrf_exempt
-def login(request):
-    """Endpoint for user login"""
-    if request.method == "POST":
-        try:
-            data = json.loads(request.body)
-            email = data.get("email")
-            password = data.get("password")
-        except json.JSONDecodeError:
-            return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
 
-        if not email or not password:
-            return JsonResponse({"success": False, "message": "Email and password are required"})
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_HOST_USER = "rahulsnsihub@gmail.com"  
+EMAIL_HOST_PASSWORD = "gspmoernuumgcerc"  
 
-        # Fetch the user data from MongoDB
-        user = collection.find_one({"email": email})
+def send_email(to_email, subject, message):
+    """Send an email notification."""
+    try:
+        server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
+        server.starttls()
+        server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
 
-        if user and user["password"] == password:
-            # Successful login
-            return JsonResponse({"success": True, "message": "Login successful"})
-        else:
-            # Incorrect credentials
-            return JsonResponse({"success": False, "message": "Invalid email or password"})
+        msg = MIMEMultipart()
+        msg['From'] = EMAIL_HOST_USER
+        msg['To'] = to_email
+        msg['Subject'] = subject
+        msg.attach(MIMEText(message, 'plain'))
 
-    return JsonResponse({"success": False, "message": "Invalid request method"})
+        server.send_message(msg)
+        server.quit()
+    except Exception as e:
+        print(f"Error sending email: {e}")
 
-accountcollections = db["Credentials"]
+
 def validate_email(email):
     """Validate email to ensure it ends with @gmail.com"""
     return re.match(r'^[a-zA-Z0-9._%+-]+@gmail\.com$', email)
 def validate_password(password):
     return re.match(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$', password)
+
+import bcrypt
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+from pymongo import MongoClient
+
+# MongoDB setup (adjust as per your database)
+client = MongoClient("mongodb+srv://1QoSRtE75wSEibZJ:1QoSRtE75wSEibZJ@cluster0.mregq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+db = client["hospital"]
+collection = db["Credentials"]
+
+# Email validation (example)
+def validate_email(email):
+    return email.endswith("@gmail.com")
+
+# Password validation (example)
+def validate_password(password):
+    import re
+    pattern = r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"
+    return bool(re.match(pattern, password))
+
 
 @csrf_exempt
 def create_account(request):
@@ -68,15 +86,18 @@ def create_account(request):
                     "message": "Password must include uppercase, lowercase, number, special character, and be at least 8 characters long"
                 }, status=400)
 
+            # Hash the password with bcrypt
+            hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
             # Store the user data in MongoDB
             account = {
                 "username": username,
                 "email": email,
-                "password": password,
+                "password": hashed_password.decode('utf-8'),  # Store as string
                 "role": role,
                 "privilege": privilege
             }
-            accountcollections.insert_one(account)
+            collection.insert_one(account)
 
             return JsonResponse({"message": "Account created successfully!"}, status=201)
 
@@ -86,125 +107,121 @@ def create_account(request):
     return JsonResponse({"message": "Invalid request method."}, status=405)
 
 
+@csrf_exempt
+def login(request):
+    """Endpoint for user login"""
+    if request.method == "POST":
+        try:
+            # Parse the JSON request body
+            data = json.loads(request.body)
+            email = data.get("email")
+            password = data.get("password")
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
+
+        if not email or not password:
+            return JsonResponse({"success": False, "message": "Email and password are required"}, status=400)
+
+        # Fetch the user data from MongoDB
+        user = collection.find_one({"email": email})
+        if user:
+            # Retrieve the hashed password from the database
+            stored_hashed_password = user["password"]
+
+            # Use bcrypt to compare the provided password with the stored hash
+            if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password.encode('utf-8')):
+                # Send login email
+                send_email(email, "Login Notification", "You have logged in successfully.")
+                return JsonResponse({"success": True, "message": "Login successful"}, status=200)
+            else:
+                return JsonResponse({"success": False, "message": "Invalid email or password"}, status=401)
+        else:
+            return JsonResponse({"success": False, "message": "User not found"}, status=404)
+
+    return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
 
 
-# @csrf_exempt
-# def registration(request):
-#     if request.method == 'POST':
-#         try:
-#             import json
-#             data = json.loads(request.body)
-#             username = data.get('username', '')
-#             email = data.get('email', '')
-#             password = data.get('password', '')
 
-#             if not username or not email or not password:
-#                 return JsonResponse({"message": "All fields are required"}, status=400)
+@csrf_exempt
+def logout(request):
+    """Endpoint for user logout and sending an email notification"""
+    if request.method == "POST":
+        try:
+            # Parse the JSON request body
+            data = json.loads(request.body)
+            email = data.get("email")
+        except json.JSONDecodeError:
+            return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
 
-#             if not validate_email(email):
-#                 return JsonResponse({"message": "Invalid email format. Only @gmail.com allowed"}, status=400)
+        if not email:
+            return JsonResponse({"success": False, "message": "Email is required"}, status=400)
 
-#             if not validate_password(password):
-#                 return JsonResponse({
-#                     "message": "Password must include uppercase, lowercase, number, special character, and be at least 8 characters long"
-#                 }, status=400)
+        # Send logout email notification
+        send_email(email, "Logout Notification", "You have successfully logged out.")
 
-#             # Save to database
-#             user = {"username": username, "email": email, "password": password}
-#             collection.insert_one(user)
+        return JsonResponse({"success": True, "message": "Logout successful"}, status=200)
 
-#             return JsonResponse({"message": "User registered successfully"}, status=201)
-#         except Exception as e:
-#             return JsonResponse({"message": "Error occurred", "error": str(e)}, status=500)
+    return JsonResponse({"success": False, "message": "Invalid request method"}, status=405)
 
+@csrf_exempt
+def forgot_password(request):
+    """Handle password reset request."""
+    if request.method == 'POST':
+        try:
+            # Parse JSON body
+            data = json.loads(request.body)
+            email = data.get('email')
+            
+            # Check if the email is a valid Gmail address
+            if not email or not email.endswith('@gmail.com'):
+                return JsonResponse({'success': False, 'message': 'Invalid email address. Please use a valid Gmail address.'}, status=400)
 
+            # Generate a password reset link
+            reset_link = f"http://localhost:3000/resetpassword"
+            
+            # Send the reset email
+            subject = "Password Reset Request"
+            message = f"To reset your password, click the link: {reset_link}"
 
-# # Email Configuration
-# EMAIL_HOST = "smtp.gmail.com"
-# EMAIL_PORT = 587
-# EMAIL_HOST_USER = "rahulsnsihub@gmail.com"  # Replace with your email 
-# EMAIL_HOST_PASSWORD = "gspmoernuumgcerc"  # Replace with your app password
-# EMAIL_USE_TLS = True
+            send_email(email, subject, message)
+            return JsonResponse({'success': True, 'message': 'Password reset link sent to your email'})
 
-# def generate_otp():
-#     """Generate a 6-digit OTP"""
-#     return random.randint(100000, 999999)
-
-# def send_email_otp(to_email, otp):
-#     """Send OTP via email"""
-#     try:
-#         msg = MIMEMultipart()
-#         msg["From"] = EMAIL_HOST_USER
-#         msg["To"] = to_email
-#         msg["Subject"] = "Your OTP for Email Verification"
-
-#         body = f"""
-#         Your OTP for email verification is: {otp}
+        except Exception as e:
+            print(f"Error during password reset: {e}")
+            return JsonResponse({'success': False, 'message': 'An error occurred. Please try again later.'}, status=500)
         
-#         This OTP will expire in 5 minutes.
-        
-#         If you didn't request this OTP, please ignore this email.
-#         """
-#         msg.attach(MIMEText(body, "plain"))
+def reset_password(request):
+    if request.method == 'POST':
+        try:
+            # Get data from the request body
+            data = request.POST
+            email = data.get('email')
+            new_password = data.get('newPassword')
 
-#         # Set up the server
-#         server = smtplib.SMTP(EMAIL_HOST, EMAIL_PORT)
-#         server.starttls()
-#         server.login(EMAIL_HOST_USER, EMAIL_HOST_PASSWORD)
-#         server.send_message(msg)
-#         server.quit()
-#         return True
-#     except Exception as e:
-#         print(f"Error sending email: {str(e)}")
-#         return False
+            if not email or not new_password:
+                return JsonResponse({"error": "All fields are required"}, status=400)
 
-# @csrf_exempt
-# def send_otp(request):
-#     """Endpoint to send OTP"""
-#     if request.method == "POST":
-#         try:
-#             data = json.loads(request.body)
-#             email = data.get("email")
-#         except json.JSONDecodeError:
-#             return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
+            # Validate password (using the same criteria as in the frontend)
+            if len(new_password) < 8 or not any(char.isdigit() for char in new_password) or not any(char.isalpha() for char in new_password):
+                return JsonResponse({"error": "Password must be at least 8 characters long and contain letters and numbers"}, status=400)
 
-#         if email:
-#             otp = generate_otp()
-#             cache.set(email, otp, timeout=300)  # Store OTP in cache for 5 minutes
-#             if send_email_otp(email, otp):
-#                 return JsonResponse({"success": True, "message": "OTP sent to email"})
-#             return JsonResponse({"success": False, "message": "Failed to send email"})
-#         return JsonResponse({"success": False, "message": "Email is required"})
+            # Hash the new password before saving
+            hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
 
-#     return JsonResponse({"success": False, "message": "Invalid request method"})
+            # Find the user in the collection and update the password
+            result = collection.update_one(
+                {"email": email},
+                {"$set": {"password": hashed_password}}
+            )
 
-# @csrf_exempt
-# def verify_otp(request):
-#     """Endpoint to verify OTP"""
-#     if request.method == "POST":
-#         try:
-#             data = json.loads(request.body)
-#             email = data.get("email")
-#             otp = data.get("otp")
-#             print(f"Received OTP: {otp}, for email: {email}")
-#         except json.JSONDecodeError:
-#             return JsonResponse({"success": False, "message": "Invalid JSON format"}, status=400)
+            if result.matched_count == 0:
+                return JsonResponse({"error": "No user found with this email"}, status=404)
 
-#         if not email or not otp:
-#             return JsonResponse({"success": False, "message": "Email and OTP are required"})
+            return JsonResponse({"success": "Password reset successfully"}, status=200)
 
-#         cached_otp = cache.get(email)
-#         if cached_otp:
-#             print(f"Cached OTP for email {email}: {cached_otp}")
-#             if int(otp) == cached_otp:
-#                 cache.delete(email)  # Remove OTP after successful verification
-#                 return JsonResponse({"success": True, "message": "OTP verified successfully"})
-#             else:
-#                 return JsonResponse({"success": False, "message": "Invalid OTP"})
-#         else:
-#             return JsonResponse({"success": False, "message": "OTP expired or not found"})
+        except Exception as e:
+            return JsonResponse({"error": f"Error: {str(e)}"}, status=500)
 
-#     return JsonResponse({"success": False, "message": "Invalid request method"})
-
-
-
+    else:
+        return JsonResponse({"error": "Invalid request method"}, status=405)
+    

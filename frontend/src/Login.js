@@ -8,30 +8,28 @@ function Login() {
   const [message, setMessage] = useState('');
   const navigate = useNavigate();
 
+  // Handle input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     const { email, password } = formData;
-
+  
     if (!email || !password) {
       setError('Both fields are required');
       return;
     }
-
+  
     try {
-      // Sending login request to backend
-      const response = await axios.post('http://127.0.0.1:8000/api/login', formData);
-      console.log(response.data); // Log the server response
-
+      const response = await axios.post('http://127.0.0.1:8000/api/login', { email, password });
       if (response.data.success) {
         setMessage('Login successful!');
         setError('');
-        // Navigate to home page upon successful login
-        navigate('/home');
+        localStorage.setItem("email", email); // Store email in localStorage
+        navigate('/home'); // Navigate to home page upon successful login
       } else {
         setError(response.data.message || 'Invalid credentials. Please try again.');
         setMessage('');
@@ -43,10 +41,15 @@ function Login() {
     }
   };
 
+    // Navigate to forgot password page
+    const handleForgotPassword = () => {
+      navigate('/forgotpassword');
+    };
+  
   return (
     <div style={styles.container}>
       <h1 style={styles.header}>Hospital Management System - Login</h1>
-      <form onSubmit={handleSubmit} style={styles.form}>
+      <form onSubmit={handleLogin} style={styles.form}>
         <input
           type="email"
           name="email"
@@ -65,6 +68,7 @@ function Login() {
         />
         <button type="submit" style={styles.button}>Login</button>
       </form>
+      <button onClick={handleForgotPassword} style={styles.forgotPasswordButton}>Forgot Password</button>
       {message && <p style={styles.successMessage}>{message}</p>}
       {error && <p style={styles.errorMessage}>{error}</p>}
     </div>
@@ -107,7 +111,18 @@ const styles = {
     transition: 'border-color 0.3s ease',
   },
   button: {
-    backgroundColor: '#FF9900', // Amazon's yellow-orange theme
+    backgroundColor: '#FF9900',
+    color: '#fff',
+    border: 'none',
+    padding: '12px 30px',
+    borderRadius: '4px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+    marginTop: '20px',
+  },
+  forgotPasswordButton: {
+    backgroundColor: '#007BFF',
     color: '#fff',
     border: 'none',
     padding: '12px 30px',
@@ -128,5 +143,6 @@ const styles = {
     marginTop: '20px',
   },
 };
+
 
 export default Login;
