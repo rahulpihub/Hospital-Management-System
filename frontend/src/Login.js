@@ -25,26 +25,43 @@ function Login() {
   
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/login', { email, password });
+  
       if (response.data.success) {
         setMessage('Login successful!');
         setError('');
         localStorage.setItem("email", email); // Store email in localStorage
-        navigate('/home'); // Navigate to home page upon successful login
+        localStorage.setItem("role", response.data.role); // Store user role in localStorage
+  
+        // Navigate based on the role
+        const role = response.data.role;
+        if (role === 'doctor') {
+          navigate('/dochomepage'); // Navigate to doctor homepage
+        } else if (role === 'staff') {
+          navigate('/staffhomepage'); // Navigate to staff homepage
+        } else {
+          navigate('/home'); // Default home page if the role doesn't match
+        }
       } else {
         setError(response.data.message || 'Invalid credentials. Please try again.');
         setMessage('');
       }
     } catch (err) {
-      console.error('Error during login:', err);
-      setError('Error during login. Please try again.');
+      if (err.response && err.response.status === 403) {
+        // If the account is locked, show an appropriate message
+        setError('Your account is locked. Try again after 30 minutes.');
+      } else {
+        console.error('Error during login:', err);
+        setError('Error during login. Please try again.');
+      }
       setMessage('');
     }
   };
+  
 
-    // Navigate to forgot password page
-    const handleForgotPassword = () => {
-      navigate('/forgotpassword');
-    };
+  // Navigate to forgot password page
+  const handleForgotPassword = () => {
+    navigate('/forgotpassword');
+  };
   
   return (
     <div style={styles.container}>
@@ -143,6 +160,5 @@ const styles = {
     marginTop: '20px',
   },
 };
-
 
 export default Login;
