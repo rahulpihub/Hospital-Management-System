@@ -34,9 +34,9 @@ function Login() {
   
         // Navigate based on the role
         const role = response.data.role;
-        if (role === 'doctor') {
+        if (role === 'Doctor') {
           navigate('/dochomepage'); // Navigate to doctor homepage
-        } else if (role === 'staff') {
+        } else if (role === 'Staff') {
           navigate('/staffhomepage'); // Navigate to staff homepage
         } else {
           navigate('/'); // Default home page if the role doesn't match
