@@ -7,6 +7,7 @@ import Admin from './admin';
 import ForgotPassword from './forgotpassword';
 import ResetPassword from './resetpassword';
 import DoctorHomepage from './dochomepage';
+import AdminCreateAccount from './admincreateaccount';
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         <Route path="/resetpassword" element={<ResetPassword />} />
         <Route path="/dochomepage" element={<DoctorHomepage />} />
+        <Route path="/admin-create-account" element={<AdminCreateAccount />} />
       </Routes>
     </Router>
   );
