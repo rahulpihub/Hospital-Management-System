@@ -1,62 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const styles = {
-  container: {
-    marginTop: '50px',
-    textAlign: 'center',
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#F3F3F3',
-    padding: '20px',
-    borderRadius: '8px',
-    maxWidth: '400px',
-    margin: 'auto',
-    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
-  },
-  header: {
-    color: '#333',
-    marginBottom: '20px',
-    fontWeight: 'bold',
-    fontSize: '28px',
-  },
-  form: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  input: {
-    padding: '12px 20px',
-    margin: '10px 0',
-    width: '80%',
-    fontSize: '16px',
-    borderRadius: '4px',
-    border: '1px solid #ddd',
-    backgroundColor: '#fff',
-    outline: 'none',
-    transition: 'border-color 0.3s ease',
-  },
-  button: {
-    backgroundColor: '#FF9900',
-    color: '#fff',
-    border: 'none',
-    padding: '12px 30px',
-    borderRadius: '4px',
-    fontSize: '16px',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease',
-    marginTop: '20px',
-  },
-  successMessage: {
-    color: 'green',
-    fontSize: '16px',
-    marginTop: '20px',
-  },
-  errorMessage: {
-    color: 'red',
-    fontSize: '16px',
-    marginTop: '20px',
-  },
-};
 
 function Admin() {
   const navigate = useNavigate();
@@ -183,5 +127,62 @@ function Admin() {
     </div>
   );
 }
+
+const styles = {
+  container: {
+    marginTop: '50px',
+    textAlign: 'center',
+    fontFamily: 'Arial, sans-serif',
+    backgroundColor: '#F3F3F3',
+    padding: '20px',
+    borderRadius: '8px',
+    maxWidth: '400px',
+    margin: 'auto',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+  },
+  header: {
+    color: '#333',
+    marginBottom: '20px',
+    fontWeight: 'bold',
+    fontSize: '28px',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  input: {
+    padding: '12px 20px',
+    margin: '10px 0',
+    width: '80%',
+    fontSize: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    backgroundColor: '#fff',
+    outline: 'none',
+    transition: 'border-color 0.3s ease',
+  },
+  button: {
+    backgroundColor: '#FF9900',
+    color: '#fff',
+    border: 'none',
+    padding: '12px 30px',
+    borderRadius: '4px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+    marginTop: '20px',
+  },
+  successMessage: {
+    color: 'green',
+    fontSize: '16px',
+    marginTop: '20px',
+  },
+  errorMessage: {
+    color: 'red',
+    fontSize: '16px',
+    marginTop: '20px',
+  },
+};
 
 export default Admin;
