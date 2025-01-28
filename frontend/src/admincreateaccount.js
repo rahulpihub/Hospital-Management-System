@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 function AdminCreateAccount() {
   const [formData, setFormData] = useState({
@@ -8,34 +7,66 @@ function AdminCreateAccount() {
     specialization: '',
     qualification: '',
     experience: '',
-    certification: '',
+    certification: null,
     license: '',
     role: '',
   });
 
   const [message, setMessage] = useState('');
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value, files } = e.target;
+
+    if (name === 'certification') {
+      setFormData({ ...formData, [name]: files[0] });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    // Validate name (letters only)
+    if (!/^[a-zA-Z\s]+$/.test(formData.name)) {
+      newErrors.name = 'Name must contain only letters.';
+    }
+
+    // Validate email (@gmail.com)
+    if (!formData.email.endsWith('@gmail.com')) {
+      newErrors.email = 'Email must end with "@gmail.com".';
+    }
+
+    // Validate certification file upload
+    if (!formData.certification) {
+      newErrors.certification = 'Please upload a certification file.';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0; // Return true if no errors
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log(formData); // This will log the form data. Replace with API call if needed.
-    setMessage('Account created successfully!');
-    setFormData({
-      name: '',
-      email: '',
-      specialization: '',
-      qualification: '',
-      experience: '',
-      certification: '',
-      license: '',
-      role: '',
-    });
+
+    if (validateForm()) {
+      console.log(formData); // Log the form data
+      setMessage('Account created successfully!');
+      setFormData({
+        name: '',
+        email: '',
+        specialization: '',
+        qualification: '',
+        experience: '',
+        certification: null,
+        license: '',
+        role: '',
+      });
+      setErrors({});
+    } else {
+      setMessage('');
+    }
   };
 
   return (
@@ -51,6 +82,8 @@ function AdminCreateAccount() {
           style={styles.input}
           required
         />
+        {errors.name && <p style={styles.error}>{errors.name}</p>}
+
         <input
           type="email"
           name="email"
@@ -60,6 +93,8 @@ function AdminCreateAccount() {
           style={styles.input}
           required
         />
+        {errors.email && <p style={styles.error}>{errors.email}</p>}
+
         <input
           type="text"
           name="specialization"
@@ -68,6 +103,7 @@ function AdminCreateAccount() {
           placeholder="Specialization"
           style={styles.input}
         />
+
         <input
           type="text"
           name="qualification"
@@ -77,6 +113,7 @@ function AdminCreateAccount() {
           style={styles.input}
           required
         />
+
         <input
           type="text"
           name="experience"
@@ -85,14 +122,16 @@ function AdminCreateAccount() {
           placeholder="Experience (in years)"
           style={styles.input}
         />
+
         <input
-          type="text"
+          type="file"
           name="certification"
-          value={formData.certification}
           onChange={handleChange}
-          placeholder="Certification"
           style={styles.input}
+          accept=".pdf,.doc,.docx"
         />
+        {errors.certification && <p style={styles.error}>{errors.certification}</p>}
+
         <input
           type="text"
           name="license"
@@ -101,6 +140,7 @@ function AdminCreateAccount() {
           placeholder="License Number"
           style={styles.input}
         />
+
         <select
           name="role"
           value={formData.role}
@@ -113,6 +153,7 @@ function AdminCreateAccount() {
           <option value="Staff">Staff</option>
           <option value="Nurse">Nurse</option>
         </select>
+
         <button type="submit" style={styles.button}>
           Create Account
         </button>
@@ -170,6 +211,12 @@ const styles = {
     color: 'green',
     fontSize: '16px',
     marginTop: '20px',
+  },
+  error: {
+    color: 'red',
+    fontSize: '14px',
+    marginBottom: '-10px',
+    marginTop: '-10px',
   },
 };
 
