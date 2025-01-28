@@ -39,7 +39,7 @@ function Login() {
         } else if (role === 'staff') {
           navigate('/staffhomepage'); // Navigate to staff homepage
         } else {
-          navigate('/home'); // Default home page if the role doesn't match
+          navigate('/'); // Default home page if the role doesn't match
         }
       } else {
         setError(response.data.message || 'Invalid credentials. Please try again.');
