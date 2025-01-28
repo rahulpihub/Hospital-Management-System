@@ -162,14 +162,14 @@ def login(request):
                 if failed_attempts >= 5:
                     collection.update_one(
                         {"email": email},
-                        {"$set": {"failed_attempts": failed_attempts, "last_failed_time": time.time()}}
+                        {"$set": {"failed_attempts": failed_attempts, "last_failed_time": time.strftime("%Y-%m-%d %H:%M:%S")}}
                     )
                     return JsonResponse({"success": False, "message": "Your account is locked. Try again after 30 minutes."}, status=403)
                 else:
                     # Update failed attempts count for the account
                     collection.update_one(
                         {"email": email},
-                        {"$set": {"failed_attempts": failed_attempts, "last_failed_time": time.time()}}
+                        {"$set": {"failed_attempts": failed_attempts, "last_failed_time": time.strftime("%Y-%m-%d %H:%M:%S")}}
                     )
 
                 return JsonResponse({"success": False, "message": "Invalid email or password"}, status=401)
