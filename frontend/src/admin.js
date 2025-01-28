@@ -1,6 +1,65 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const styles = {
+  container: {
+    marginTop: '50px',
+    textAlign: 'center',
+    fontFamily: 'Arial, sans-serif',
+    backgroundColor: '#F3F3F3',
+    padding: '20px',
+    borderRadius: '8px',
+    maxWidth: '400px',
+    margin: 'auto',
+    boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)',
+  },
+  header: {
+    color: '#333',
+    marginBottom: '20px',
+    fontWeight: 'bold',
+    fontSize: '28px',
+  },
+  form: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  input: {
+    padding: '12px 20px',
+    margin: '10px 0',
+    width: '80%',
+    fontSize: '16px',
+    borderRadius: '4px',
+    border: '1px solid #ddd',
+    backgroundColor: '#fff',
+    outline: 'none',
+    transition: 'border-color 0.3s ease',
+  },
+  button: {
+    backgroundColor: '#FF9900',
+    color: '#fff',
+    border: 'none',
+    padding: '12px 30px',
+    borderRadius: '4px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+    marginTop: '20px',
+  },
+  successMessage: {
+    color: 'green',
+    fontSize: '16px',
+    marginTop: '20px',
+  },
+  errorMessage: {
+    color: 'red',
+    fontSize: '16px',
+    marginTop: '20px',
+  },
+};
 
 function Admin() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -53,62 +112,74 @@ function Admin() {
     });
   };
 
+  const handleNavigation = () => {
+    navigate('/admin-create-account');
+  };
+
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Admin Registration</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Username:</label>
-          <input
-            type="text"
-            name="username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Email:</label>
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Password:</label>
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-          />
-        </div>
-        <div>
-          <label>Role:</label>
-          <select name="role" value={formData.role} onChange={handleChange} required>
-            <option value="">Select Role</option>
-            <option value="Admin">Admin</option>
-            <option value="Doctor">Doctor</option>
-            <option value="Nurse">Nurse</option>
-            <option value="Staff">Staff</option>
-          </select>
-        </div>
-        <div>
-          <label>Access Privilege:</label>
-          <select name="privilege" value={formData.privilege} onChange={handleChange} required>
-            <option value="">Select Privilege</option>
-            <option value="Full Privilege">Full Privilege</option>
-            <option value="Moderate Privilege">Moderate Privilege</option>
-            <option value="Basic Privilege">Basic Privilege</option>
-          </select>
-        </div>
-        <button type="submit">Create Account</button>
+    <div style={styles.container}>
+      <h1 style={styles.header}>Admin Registration</h1>
+      <form style={styles.form} onSubmit={handleSubmit}>
+        <input
+          style={styles.input}
+          type="text"
+          name="username"
+          placeholder="Username"
+          value={formData.username}
+          onChange={handleChange}
+          required
+        />
+        <input
+          style={styles.input}
+          type="email"
+          name="email"
+          placeholder="Email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          style={styles.input}
+          type="password"
+          name="password"
+          placeholder="Password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+        <select
+          style={styles.input}
+          name="role"
+          value={formData.role}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select Role</option>
+          <option value="Admin">Admin</option>
+          <option value="Doctor">Doctor</option>
+          <option value="Nurse">Nurse</option>
+          <option value="Staff">Staff</option>
+        </select>
+        <select
+          style={styles.input}
+          name="privilege"
+          value={formData.privilege}
+          onChange={handleChange}
+          required
+        >
+          <option value="">Select Privilege</option>
+          <option value="Full Privilege">Full Privilege</option>
+          <option value="Moderate Privilege">Moderate Privilege</option>
+          <option value="Basic Privilege">Basic Privilege</option>
+        </select>
+        <button type="submit" style={styles.button}>
+          Create Account
+        </button>
       </form>
-      {message && <p>{message}</p>}
+      <button onClick={handleNavigation} style={{ ...styles.button, marginTop: '10px' }}>
+        Navigate to Create Account Page
+      </button>
+      {message && <p style={message.includes('error') ? styles.errorMessage : styles.successMessage}>{message}</p>}
     </div>
   );
 }
